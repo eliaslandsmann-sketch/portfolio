@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Dashboard | Landsmann</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --bg:#f8f9fa;--surface:#fff;--surface-alt:#f1f3f5;
+            --border:#dee2e6;--border-light:#e9ecef;
+            --text:#212529;--text-2:#495057;--text-3:#868e96;
+            --blue:#228be6;--blue-d:#1971c2;--blue-bg:#e7f5ff;
+            --green:#2f9e44;--green-bg:#ebfbee;
+            --red:#e03131;--red-bg:#fff5f5;
+            --orange:#e8590c;--orange-bg:#fff4e6;
+            --header:#1e293b;--header-2:#334155;
+            --radius:6px;
+        }
+        body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+        .mono{font-family:'JetBrains Mono',monospace}
+
+        /* Layout */
+        .app-header{background:var(--header);color:#fff;padding:20px 32px;display:flex;align-items:center;justify-content:space-between}
+        .app-header h1{font-size:20px;font-weight:600}
+        .app-header .sub{font-size:12px;color:#94a3b8;margin-top:2px}
+        .app-header .meta{text-align:right;font-size:12px;color:#94a3b8}
+        .app-header .meta strong{color:var(--blue);font-weight:600}
+
+        /* Tabs */
+        .tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:stretch;gap:0}
+        .tab-btn{padding:14px 24px;font:inherit;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text-3);border-bottom:2px solid transparent;transition:all .15s}
+        .tab-btn:hover{color:var(--text)}
+        .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+        .tab-actions{margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 0}
+
+        .container{max-width:1440px;margin:0 auto;padding:24px 32px}
+
+        /* Buttons */
+        .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font:inherit;font-size:13px;font-weight:500;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;background:var(--surface);color:var(--text-2);transition:all .12s}
+        .btn:hover{border-color:#adb5bd;background:var(--surface-alt)}
+        .btn-p{background:var(--blue);color:#fff;border-color:var(--blue)}
+        .btn-p:hover{background:var(--blue-d)}
+        .btn-s{background:var(--green);color:#fff;border-color:var(--green)}
+        .btn-s:hover{background:#27863a}
+        .btn-d{color:var(--red);border-color:var(--red)}
+        .btn-d:hover{background:var(--red-bg)}
+        .btn:disabled{opacity:.4;cursor:not-allowed}
+
+        /* Cards */
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+        .card-head{padding:12px 16px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
+        .card-head h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3)}
+        .card-body{padding:16px}
+
+        /* KPI */
+        .kpi-row{display:grid;gap:1px;background:var(--border-light)}
+        .kpi-row.c4{grid-template-columns:repeat(4,1fr)}
+        .kpi-row.c3{grid-template-columns:repeat(3,1fr)}
+        .kpi-row.c6{grid-template-columns:repeat(6,1fr)}
+        .kpi{background:var(--surface);padding:16px 20px;text-align:center}
+        .kpi .label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:6px}
+        .kpi .val{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600}
+        .kpi .val.sm{font-size:16px}
+        .kpi .sub{font-size:11px;color:var(--text-3);margin-top:2px}
+        .kpi .val.blue{color:var(--blue)}
+        .kpi .val.green{color:var(--green)}
+        .kpi .val.red{color:var(--red)}
+        .kpi .val.orange{color:var(--orange)}
+
+        /* Tables */
+        table{width:100%;border-collapse:collapse}
+        thead tr{background:var(--header)}
+        th{padding:10px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:#fff;text-align:left;white-space:nowrap}
+        th.r{text-align:right}
+        th.c{text-align:center}
+        td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border-light);vertical-align:middle}
+        td.r{text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px}
+        td.c{text-align:center}
+        tr:hover{background:#f8f9fa}
+        tr.sum{background:var(--surface-alt);font-weight:600}
+        tr.sum td{border-top:2px solid var(--border)}
+
+        .obj-name{display:flex;align-items:center;gap:8px}
+        .obj-bar{width:3px;height:18px;border-radius:2px;background:var(--blue)}
+        .obj-id{font-weight:600;font-size:13px}
+        .obj-addr{font-size:11px;color:var(--text-3)}
+        .obj-meta{font-size:10px;color:var(--text-3)}
+
+        .tag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600}
+        .tag-green{background:var(--green-bg);color:var(--green)}
+        .tag-red{background:var(--red-bg);color:var(--red)}
+        .tag-orange{background:var(--orange-bg);color:var(--orange)}
+        .tag-blue{background:var(--blue-bg);color:var(--blue)}
+
+        .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+        .dot-g{background:var(--green)}.dot-y{background:var(--orange)}.dot-r{background:var(--red)}
+
+        /* Progress */
+        .pbar{width:50px;height:5px;background:var(--border-light);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px}
+        .pfill{height:100%;border-radius:3px}
+
+        /* Spek */
+        .spek{display:flex;align-items:center;gap:6px;font-size:11px}
+        .spek-bar{flex:1;height:4px;background:var(--border-light);border-radius:2px;overflow:hidden;min-width:40px;max-width:80px}
+        .spek-fill{height:100%;border-radius:2px}
+
+        /* Modal */
+        .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100}
+        .modal{background:#fff;width:90%;max-width:640px;max-height:90vh;overflow:auto;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+        .modal-h{background:var(--header);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+        .modal-h h3{font-size:16px;font-weight:600}
+        .modal-b{padding:20px}
+        .modal-f{padding:12px 20px;background:var(--surface-alt);border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+        .fg{margin-bottom:10px}
+        .fg label{display:block;font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-bottom:3px}
+        .fi{width:100%;padding:8px 10px;font:inherit;font-family:'JetBrains Mono',monospace;font-size:13px;border:1px solid var(--border);border-radius:var(--radius)}
+        .fi:focus{outline:none;border-color:var(--blue)}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+        .preview{margin-top:16px;padding:12px;background:var(--surface-alt);border-left:3px solid var(--blue);border-radius:var(--radius)}
+        .preview .pt{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+
+        /* Bank View */
+        .bank-section{margin-bottom:24px}
+        .bank-title{font-size:18px;font-weight:600;color:var(--header);margin-bottom:4px}
+        .bank-sub{font-size:12px;color:var(--text-3);margin-bottom:16px}
+        .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+        .stat-box h4{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
+        .stat-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border-light)}
+        .stat-row:last-child{border-bottom:none}
+        .stat-row .sl{color:var(--text-3)}
+        .stat-row .sv{font-weight:600;font-family:'JetBrains Mono',monospace;font-size:12px}
+        .stat-row .sv.blue{color:var(--blue)}.stat-row .sv.green{color:var(--green)}.stat-row .sv.red{color:var(--red)}
+
+        .footer{padding:16px 32px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text-3)}
+
+        /* Login */
+        .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+        .login-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;width:380px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+        .login-head{background:var(--header);color:#fff;padding:24px;text-align:center}
+        .login-head h2{font-size:20px;font-weight:600}
+        .login-head .login-sub{font-size:12px;color:#94a3b8;margin-top:4px}
+        .login-body{padding:24px}
+        .login-body .fg{margin-bottom:16px}
+        .login-body .fi{width:100%;padding:10px 12px;font-size:15px}
+        .login-body .btn{width:100%;justify-content:center;padding:10px;font-size:14px}
+        .login-err{background:var(--red-bg);color:var(--red);padding:8px 12px;border-radius:var(--radius);font-size:13px;margin-bottom:12px;text-align:center}
+
+        /* Tax View */
+        .tax-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 20px;margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:end}
+        .tax-bar label{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-3);display:flex;flex-direction:column;gap:3px}
+        .tax-bar select,.tax-bar input{padding:6px 8px;font:inherit;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);width:130px}
+        .tax-info{background:var(--blue-bg);border-radius:var(--radius);padding:12px 16px;margin-bottom:20px;font-size:12px;line-height:1.6}
+        .tax-bc{display:flex;align-items:center;gap:8px;margin:2px 0}
+        .tax-bc-l{width:30px;text-align:right;font-size:11px;color:var(--text-3);font-family:'JetBrains Mono',monospace}
+        .tax-bc-t{flex:1;height:20px;background:var(--border-light);border-radius:3px;overflow:hidden}
+        .tax-bc-f{height:100%;background:var(--green);border-radius:3px;transition:width .3s}
+        .tax-bc-v{width:80px;text-align:right;font-size:11px;font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace}
+        .tax-dl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:13px}
+        .tax-dl .tl{color:var(--text-3)}
+        .tax-dl .tv{text-align:right;font-weight:500}
+
+        /* Tax Improvements */
+        .warn-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+        .warn-box{padding:12px 16px;border-radius:var(--radius);font-size:13px;display:flex;align-items:flex-start;gap:10px;line-height:1.6}
+        .warn-box.wd{background:var(--red-bg);border-left:3px solid var(--red);color:#c92a2a}
+        .warn-box.ww{background:var(--orange-bg);border-left:3px solid var(--orange);color:#e8590c}
+        .warn-box.wi{background:var(--blue-bg);border-left:3px solid var(--blue);color:var(--blue-d)}
+        .warn-icon{font-size:18px;flex-shrink:0;line-height:1}
+
+        .fb-card{background:linear-gradient(135deg,#e7f5ff 0%,#d0ebff 100%);border:1px solid #a5d8ff;border-radius:var(--radius);padding:20px;margin-bottom:20px}
+        .fb-card h3{font-size:14px;font-weight:700;color:var(--header);margin-bottom:4px}
+        .fb-sub{font-size:11px;color:var(--text-3);margin-bottom:16px}
+        .fb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px}
+        .fb-item{text-align:center}
+        .fb-label{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--blue-d);margin-bottom:4px}
+        .fb-val{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700}
+        .fb-note{font-size:10px;color:var(--text-3);margin-top:2px}
+        .fb-hint{margin-top:16px;padding:10px 14px;background:rgba(255,255,255,.6);border-radius:4px;font-size:11px;color:var(--text-2);line-height:1.7}
+
+        .budget-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:20px}
+        .budget-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+        .budget-card h4{font-size:12px;font-weight:600;text-transform:uppercase;color:var(--text-3);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+        .budget-bar{height:22px;background:var(--border-light);border-radius:4px;overflow:hidden;position:relative;margin-bottom:8px}
+        .budget-fill{height:100%;border-radius:4px;transition:width .3s}
+        .budget-pct{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:var(--text)}
+        .budget-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+        .budget-row .bl{color:var(--text-3)}
+        .budget-row .bv{font-weight:600;font-family:'JetBrains Mono',monospace;font-size:11px}
+
+        .san-section{margin-bottom:20px}
+        .san-obj{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+        .san-obj h4{font-size:12px;font-weight:600;text-transform:uppercase;color:var(--text-3);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+        .san-inputs{display:grid;grid-template-columns:repeat(3,1fr) auto;gap:8px;align-items:end}
+        .san-inputs label{font-size:10px;font-weight:600;color:var(--text-3);display:flex;flex-direction:column;gap:3px}
+        .san-inputs input{padding:6px 8px;font:inherit;font-family:'JetBrains Mono',monospace;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);width:100%}
+        .san-inputs input:focus{outline:none;border-color:var(--blue)}
+        .san-sum{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:100px}
+        .san-sum .sl{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase}
+        .san-sum .sv{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700}
+        .san-check{margin-top:8px;font-size:11px;display:flex;align-items:center;gap:6px}
+
+        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+        @media(max-width:900px){.two-col{grid-template-columns:1fr}}
+
+        /* Print */
+        @media print{
+            @page{size:A4 portrait;margin:12mm 10mm 15mm 10mm}
+            *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+            body{background:#fff!important;font-size:9pt}
+            .no-print{display:none!important}
+            .tab-bar,.app-header .meta{display:none!important}
+            .app-header{padding:12px 16px!important;print-color-adjust:exact}
+            .container{padding:8px 0!important;max-width:100%!important}
+            .card{border:1px solid #999!important;page-break-inside:avoid}
+            .kpi .val{font-size:14pt!important}
+            .kpi .label{font-size:7pt!important}
+            table{font-size:8pt!important}
+            th{font-size:7pt!important;padding:6px 4px!important}
+            td{padding:5px 4px!important;font-size:8pt!important}
+            td.r{font-size:8pt!important}
+            .stat-box{page-break-inside:avoid}
+        }
+    </style>
+</head>
+<body>
+<script>
+// Pre-seed portfolio data for static demo
+(function(){
+    var KEY='portfolio-v5-data';
+    if(!localStorage.getItem(KEY)){
+        var data=[{"id":"ME 5","name":"ME 5","adresse":"Melchendorfer Stra\u00dfe 5, 99094 Erfurt","art":"ETW","we":1,"wohnflaeche":54,"kaufdatum":"2016","spekFrist":"2026","kaufpreis":80000,"knk":4800,"renovierung":0,"nkmMonat":540,"bkPa":0,"hausgeld":4800,"sonstigeKosten":0,"instandhaltungJahr":540,"bewKredit":0,"restschuld":0,"zinssatz":0,"tilgungssatz":0,"zinsenPa":0,"tilgungPa":0,"kreditrate":0,"zinsbindungsEnde":"","restLfz":0,"ekEinsatz":84800,"marktwert":0,"kaufpreisProQm":1481},{"id":"R32","name":"R32","adresse":"Rathenaustra\u00dfe 32, Bad Langensalza","art":"ETW","we":1,"wohnflaeche":63,"kaufdatum":"2020","spekFrist":"2030","kaufpreis":85000,"knk":5100,"renovierung":0,"nkmMonat":470,"bkPa":0,"hausgeld":1824,"sonstigeKosten":0,"instandhaltungJahr":630,"bewKredit":0,"restschuld":0,"zinssatz":0,"tilgungssatz":0,"zinsenPa":0,"tilgungPa":0,"kreditrate":0,"zinsbindungsEnde":"","restLfz":0,"ekEinsatz":90100,"marktwert":0,"kaufpreisProQm":1349},{"id":"W19","name":"W19","adresse":"Walterslebener Sta\u00dfe 19, 99094 Erfurt","art":"EFH","we":1,"wohnflaeche":100,"kaufdatum":"2019","spekFrist":"2029","kaufpreis":100000,"knk":9000,"renovierung":150000,"nkmMonat":1357,"bkPa":0,"hausgeld":2244,"sonstigeKosten":1200,"instandhaltungJahr":1000,"bewKredit":0,"restschuld":0,"zinssatz":0,"tilgungssatz":0,"zinsenPa":0,"tilgungPa":0,"kreditrate":0,"zinsbindungsEnde":"","restLfz":0,"ekEinsatz":259000,"marktwert":0,"kaufpreisProQm":1000},{"id":"Otto1","name":"Otto1","adresse":"Otto-Kn\u00f6pfer Stra\u00dfe 1, 99096 Erfurt","art":"ETW","we":1,"wohnflaeche":37,"kaufdatum":"2025-10-01","spekFrist":"2035-10-01","kaufpreis":85000,"knk":1700,"renovierung":0,"nkmMonat":407,"bkPa":0,"hausgeld":2520,"sonstigeKosten":0,"instandhaltungJahr":370,"bewKredit":85000,"restschuld":85000,"zinssatz":0.0365,"tilgungssatz":0.015,"zinsenPa":3102.5,"tilgungPa":1275,"kreditrate":364.79,"zinsbindungsEnde":"2041-01-01","restLfz":15.4,"ekEinsatz":1700,"marktwert":0,"kaufpreisProQm":2297},{"id":"EF4","name":"EF4","adresse":"Eisenach, Friedensstra\u00dfe 4","art":"MFH","we":7,"wohnflaeche":315,"kaufdatum":"2026-01-01","spekFrist":"2036-01-01","kaufpreis":450000,"knk":63000,"renovierung":63000,"nkmMonat":3333.33,"bkPa":0,"hausgeld":14404.2,"sonstigeKosten":0,"instandhaltungJahr":3150,"bewKredit":576000,"restschuld":576000,"zinssatz":0.046,"tilgungssatz":0.0209,"zinsenPa":26496,"tilgungPa":12038.4,"kreditrate":3211.2,"zinsbindungsEnde":"2036-01-01","restLfz":10.3,"ekEinsatz":0,"marktwert":708750,"kaufpreisProQm":2250},{"id":"GM41","name":"GM41","adresse":"Gotha, Mozartstra\u00dfe 41","art":"MFH","we":4,"wohnflaeche":255,"kaufdatum":"2026-01-01","spekFrist":"2036-01-01","kaufpreis":230000,"knk":32522,"renovierung":19000,"nkmMonat":1530,"bkPa":0,"hausgeld":9360,"sonstigeKosten":1836,"instandhaltungJahr":2550,"bewKredit":249000,"restschuld":249000,"zinssatz":0.046,"tilgungssatz":0.021,"zinsenPa":11454,"tilgungPa":5229,"kreditrate":1390.25,"zinsbindungsEnde":"2036-01-01","restLfz":10.5,"ekEinsatz":32522,"marktwert":0,"kaufpreisProQm":902}];
+        localStorage.setItem(KEY,JSON.stringify(data));
+    }
+})();
+</script>
+<div id="root"></div>
+<script type="text/babel">
+class ErrorBoundary extends React.Component{constructor(p){super(p);this.state={err:null}}static getDerivedStateFromError(e){return{err:e}}componentDidCatch(e,i){console.error('React Error:',e,i)}render(){if(this.state.err)return React.createElement('pre',{style:{padding:20,color:'red',whiteSpace:'pre-wrap'}},'React Error:\n'+this.state.err.message+'\n'+this.state.err.stack);return this.props.children}}
+const {useState,useEffect,useCallback,useMemo,useRef}=React;
+
+const API_BASE=window.location.origin;
+const isApiMode=window.location.port==='8765';
+const STORAGE_KEY='portfolio-v5-data';
+const TOKEN_KEY='portfolio-v5-token';
+const TODAY=new Date();
+const authHeaders=(token)=>({'Content-Type':'application/json','Authorization':`Bearer ${token}`});
+
+// ─── Formatierung ──────────────────────────────
+const fmt={
+    eur:v=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(v),
+    eur2:v=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2}).format(v),
+    pct:(v,d=2)=>(v*100).toFixed(d)+' %',
+    pct1:v=>(v*100).toFixed(1)+' %',
+    n:(v,d=0)=>new Intl.NumberFormat('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}).format(v),
+    dt:d=>{if(!d)return'–';if(d.length===4)return d;try{return new Date(d).toLocaleDateString('de-DE')}catch(_e){return d}},
+};
+
+// ─── Berechnungen ──────────────────────────────
+const calcInternal=(obj)=>{
+    const gik=(obj.kaufpreis||0)+(obj.knk||0)+(obj.renovierung||0);
+    const nkmJahr=(obj.nkmMonat||0)*12;
+    // Echte BWK: Hausgeld + Sonstige (nicht 15% pauschal)
+    const bwkReal=(obj.hausgeld||0)+(obj.sonstigeKosten||0);
+    const noiJahr=nkmJahr-bwkReal;
+    const kapitaldienstJahr=(obj.kreditrate||0)*12;
+    const cashflowJahr=noiJahr-kapitaldienstJahr;
+    const faktor=nkmJahr>0?obj.kaufpreis/nkmJahr:0;
+    const bruttoRendite=gik>0?nkmJahr/gik:0;
+    const nettoRendite=gik>0?noiJahr/gik:0;
+    const ltv=obj.marktwert>0?(obj.restschuld||0)/obj.marktwert:0;
+    const dscr=kapitaldienstJahr>0?noiJahr/kapitaldienstJahr:0;
+    const roe=(obj.ekEinsatz||0)>0?cashflowJahr/obj.ekEinsatz:0;
+    const stilleReserven=(obj.marktwert||0)-(obj.restschuld||0);
+    const wertsteigerungPct=gik>0?((obj.marktwert||0)-gik)/gik:0;
+    const wertsteigerungEur=(obj.marktwert||0)-gik;
+    return {gik,nkmJahr,bwkReal,noiJahr,kapitaldienstJahr,cashflowJahr,cashflowMonat:cashflowJahr/12,faktor,bruttoRendite,nettoRendite,ltv,dscr,roe,stilleReserven,wertsteigerungPct,wertsteigerungEur};
+};
+
+const calcBank=(obj)=>{
+    const gik=(obj.kaufpreis||0)+(obj.knk||0)+(obj.renovierung||0);
+    const nkmJahr=(obj.nkmMonat||0)*12;
+    // Bank: 15% BWK pauschal
+    const bwk15=nkmJahr*0.15;
+    const noiJahr=nkmJahr-bwk15;
+    const kapitaldienstJahr=(obj.kreditrate||0)*12;
+    const cashflowJahr=noiJahr-kapitaldienstJahr;
+    const ueberdeckung=noiJahr-kapitaldienstJahr;
+    const faktor=nkmJahr>0?(obj.kaufpreis||0)/nkmJahr:0;
+    const bruttoRendite=gik>0?nkmJahr/gik:0;
+    const ltv=(obj.marktwert||0)>0?(obj.restschuld||0)/obj.marktwert:0;
+    const dscr=kapitaldienstJahr>0?noiJahr/kapitaldienstJahr:0;
+    const stilleReserven=(obj.marktwert||0)-(obj.restschuld||0);
+    return {gik,nkmJahr,bwk15,noiJahr,kapitaldienstJahr,cashflowJahr,ueberdeckung,faktor,bruttoRendite,ltv,dscr,stilleReserven};
+};
+
+// Spekulationsfrist-Status
+const spekStatus=(spekFrist)=>{
+    if(!spekFrist)return {label:'–',pct:0,color:'var(--text-3)',done:false};
+    let endYear;
+    if(spekFrist.length===4)endYear=parseInt(spekFrist);
+    else{try{endYear=new Date(spekFrist).getFullYear()}catch(_e){return {label:'–',pct:0,color:'var(--text-3)',done:false}}}
+    const currentYear=TODAY.getFullYear();
+    if(currentYear>=endYear)return {label:'ABGELAUFEN',pct:100,color:'var(--green)',done:true};
+    const remaining=endYear-currentYear;
+    const pct=Math.max(0,Math.min(100,(10-remaining)/10*100));
+    return {label:`${remaining}J`,pct,color:remaining<=2?'var(--orange)':'var(--blue)',done:false};
+};
+
+// ─── Steuerberechnung (ESt 2025 Grundtabelle) ──
+const RND_DATA={'EF4':{rnd:20,gutachten:'RND2026-2762 vom 12.02.2026'},'GM41':{rnd:13,gutachten:'RND2026-2754 vom 10.02.2026'}};
+
+const calcESt=(zvE)=>{if(zvE<=0)return 0;zvE=Math.floor(zvE);if(zvE<=12096)return 0;if(zvE<=17443){const y=(zvE-12096)/10000;return Math.floor((932.58*y+1400)*y)}if(zvE<=66760){const z=(zvE-17443)/10000;return Math.floor((176.65*z+2397)*z+1015.13)}if(zvE<=277825)return Math.floor(0.42*zvE-10636.31);return Math.floor(0.45*zvE-18970.06)};
+const calcSoli=(est)=>est<=18130?0:Math.min(est*0.055,(est-18130)*0.119);
+const calcSteuer=(zvE,kist=0.09)=>{const est=calcESt(zvE);const soli=calcSoli(est);return{est,soli,kist:est*kist,gesamt:est+soli+est*kist}};
+
+// Grenzsteuersatz inkl. KiSt + Soli
+const calcGrenz=(zve,ki=0.09)=>{
+    if(zve<=0)return 0;
+    return calcSteuer(zve+1,ki).gesamt-calcSteuer(zve,ki).gesamt;
+};
+
+// Enhanced tax projection with per-year Erhaltungsaufwand
+const calcTaxV2=(obj,params,erhArr=[0,0,0])=>{
+    const ri=RND_DATA[obj.id]||RND_DATA[obj.name];
+    if(!ri)return null;
+    const rnd=ri.rnd;
+    const akGeb=(obj.kaufpreis+obj.knk)*params.gba;
+    const g15=akGeb*0.15; // 15%-Grenze auf AK Gebaude (inkl. anteilige KNK)
+    const san3J=(erhArr[0]||0)+(erhArr[1]||0)+(erhArr[2]||0);
+    const anah=san3J>g15;
+    const afaB=anah?akGeb+san3J:akGeb;
+    const afaPA=afaB/rnd;
+    const afaStd=akGeb/50;
+    const ann=obj.kreditrate*12;
+    let rs=obj.bewKredit||obj.restschuld||0;
+    const startRS=rs;
+    const rows=[];let cum=0;
+    for(let j=1;j<=params.jahre;j++){
+        const zi=rs*(obj.zinssatz||0);const ti=ann>0?ann-zi:0;rs=Math.max(0,rs-ti);
+        const nkm=obj.nkmMonat*12*Math.pow(1+params.mietSt,j-1);
+        const afa=j<=rnd?afaPA:0;
+        const erh=(!anah&&j<=3)?(erhArr[j-1]||0):0;
+        const son=obj.sonstigeKosten||0;
+        const vuv=nkm-zi-afa-erh-son;
+        const eo=calcSteuer(params.zve,params.kist).gesamt;
+        const em=calcSteuer(Math.max(0,params.zve+vuv),params.kist).gesamt;
+        const er=eo-em;cum+=er;
+        rows.push({j,nkm,zi,afa,erh,son,vuv,ti,rs,er,cum,zveMitVuV:params.zve+vuv});
+    }
+    return{obj,rnd,ri,anah,afaB,afaPA,afaStd,g15,akGeb,san3J,rows,cum,startRS,mehrAfa:afaPA-afaStd,erhArr,budgetPct:g15>0?san3J/g15:0,budgetFrei:g15-san3J};
+};
+
+const calcTaxProjection=(obj,params)=>{
+    const ri=RND_DATA[obj.id]||RND_DATA[obj.name];
+    if(!ri)return null;
+    const rnd=ri.rnd;
+    const akGeb=(obj.kaufpreis+obj.knk)*params.gba;
+    const g15=(obj.kaufpreis+obj.knk)*params.gba*0.15;
+    const anah=obj.renovierung>g15;
+    const afaB=anah?akGeb+obj.renovierung:akGeb;
+    const afaPA=afaB/rnd;const afaStd=afaB/50;
+    const ann=obj.kreditrate*12;
+    let rs=obj.bewKredit||obj.restschuld||0;
+    const startRS=rs;
+    const rows=[];let cum=0;
+    for(let j=1;j<=params.jahre;j++){
+        const zi=rs*(obj.zinssatz||0);const ti=ann>0?ann-zi:0;rs=Math.max(0,rs-ti);
+        const nkm=obj.nkmMonat*12*Math.pow(1+params.mietSt,j-1);
+        const afa=j<=rnd?afaPA:0;
+        const erh=(!anah&&j===1)?obj.renovierung:0;
+        const son=obj.sonstigeKosten||0;
+        const vuv=nkm-zi-afa-erh-son;
+        const eo=calcSteuer(params.zve,params.kist).gesamt;
+        const em=calcSteuer(Math.max(0,params.zve+vuv),params.kist).gesamt;
+        const er=eo-em;cum+=er;
+        rows.push({j,nkm,zi,afa,erh,son,vuv,ti,rs,er,cum});
+    }
+    return{obj,rnd,ri,anah,afaB,afaPA,afaStd,g15,akGeb,rows,cum,startRS,mehrAfa:afaPA-afaStd};
+};
+
+// ─── Hauptkomponente ────────────────────────────
+// ─── Login ──────────────────────────────────────
+const LoginScreen=({onLogin})=>{
+    const [pw,setPw]=useState('');
+    const [err,setErr]=useState('');
+    const [busy,setBusy]=useState(false);
+
+    const submit=async(e)=>{
+        e.preventDefault();setErr('');setBusy(true);
+        try{
+            const r=await fetch(`${API_BASE}/api/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+            const d=await r.json();
+            if(d.success&&d.token){localStorage.setItem(TOKEN_KEY,d.token);onLogin(d.token)}
+            else setErr(d.error||'Login fehlgeschlagen');
+        }catch(_e){setErr('Server nicht erreichbar')}
+        setBusy(false);
+    };
+
+    return(<div className="login-wrap"><div className="login-card">
+        <div className="login-head"><h2>Portfolio Dashboard</h2><div className="login-sub">Johann Elias Landsmann</div></div>
+        <form className="login-body" onSubmit={submit}>
+            {err&&<div className="login-err">{err}</div>}
+            <div className="fg"><label>Passwort</label><input className="fi" type="password" value={pw} onChange={e=>setPw(e.target.value)} autoFocus placeholder="Passwort eingeben"/></div>
+            <button className="btn btn-p" type="submit" disabled={busy||!pw}>{busy?'Anmelden...':'Anmelden'}</button>
+        </form>
+    </div></div>);
+};
+
+const App=()=>{
+    const [token,setToken]=useState(()=>localStorage.getItem(TOKEN_KEY)||'');
+    const [authed,setAuthed]=useState(false);
+    const [objekte,setObjekte]=useState([]);
+    const [loading,setLoading]=useState(true);
+    const [view,setView]=useState('internal');
+    const [editObj,setEditObj]=useState(null);
+    const [saveStatus,setSaveStatus]=useState(null);
+
+    const doLogin=(t)=>{setToken(t);setAuthed(true)};
+    const doLogout=async()=>{
+        try{await fetch(`${API_BASE}/api/logout`,{method:'POST',headers:authHeaders(token)})}catch(_e){}
+        localStorage.removeItem(TOKEN_KEY);setToken('');setAuthed(false);setObjekte([]);
+    };
+
+    useEffect(()=>{
+        let cancelled=false;
+        (async()=>{
+            if(isApiMode&&token){
+                try{
+                    const r=await fetch(`${API_BASE}/api/objekte`,{headers:authHeaders(token)});
+                    if(cancelled)return;
+                    if(r.ok){setObjekte(await r.json());setAuthed(true)}
+                    else{localStorage.removeItem(TOKEN_KEY);setToken('');setAuthed(false)}
+                }catch(_e){
+                    const s=localStorage.getItem(STORAGE_KEY);
+                    if(s&&!cancelled)setObjekte(JSON.parse(s));
+                }
+            }else if(!isApiMode){
+                const s=localStorage.getItem(STORAGE_KEY);
+                if(s)setObjekte(JSON.parse(s));
+                setAuthed(true);
+            }
+            if(!cancelled)setLoading(false);
+        })();
+        return()=>{cancelled=true};
+    },[token]);
+
+    useEffect(()=>{if(objekte.length>0)localStorage.setItem(STORAGE_KEY,JSON.stringify(objekte))},[objekte]);
+
+    const saveToExcel=async()=>{
+        if(!isApiMode)return;
+        setSaveStatus('saving');
+        try{
+            const r=await fetch(`${API_BASE}/api/objekte`,{method:'POST',headers:authHeaders(token),body:JSON.stringify(objekte)});
+            if(r.status===401){doLogout();return}
+            setSaveStatus(r.ok?'saved':'error');
+        }catch(_e){setSaveStatus('error')}
+        setTimeout(()=>setSaveStatus(null),2000);
+    };
+
+    const updateObj=(id,updates)=>setObjekte(prev=>prev.map(o=>o.id===id?{...o,...updates}:o));
+
+    // ─── Aggregation ─────────
+    const totals=useMemo(()=>{
+        const ci=objekte.map(o=>({...o,c:calcInternal(o),cb:calcBank(o)}));
+        return{
+            count:objekte.length,
+            we:objekte.reduce((s,o)=>s+(o.we||1),0),
+            wfl:objekte.reduce((s,o)=>s+o.wohnflaeche,0),
+            kaufpreis:objekte.reduce((s,o)=>s+o.kaufpreis,0),
+            marktwert:objekte.reduce((s,o)=>s+o.marktwert,0),
+            gik:ci.reduce((s,o)=>s+o.c.gik,0),
+            nkmJahr:ci.reduce((s,o)=>s+o.c.nkmJahr,0),
+            restschuld:objekte.reduce((s,o)=>s+o.restschuld,0),
+            ekEinsatz:objekte.reduce((s,o)=>s+o.ekEinsatz,0),
+            // Internal (echte BWK)
+            noiInternal:ci.reduce((s,o)=>s+o.c.noiJahr,0),
+            bwkInternal:ci.reduce((s,o)=>s+o.c.bwkReal,0),
+            cfInternal:ci.reduce((s,o)=>s+o.c.cashflowJahr,0),
+            kd:ci.reduce((s,o)=>s+o.c.kapitaldienstJahr,0),
+            // Bank (15%)
+            noiBank:ci.reduce((s,o)=>s+o.cb.noiJahr,0),
+            cfBank:ci.reduce((s,o)=>s+o.cb.cashflowJahr,0),
+        };
+    },[objekte]);
+
+    const pKpi=useMemo(()=>({
+        ltv:totals.marktwert>0?totals.restschuld/totals.marktwert:0,
+        dscrInt:totals.kd>0?totals.noiInternal/totals.kd:0,
+        dscrBank:totals.kd>0?totals.noiBank/totals.kd:0,
+        roeInt:totals.ekEinsatz>0?totals.cfInternal/totals.ekEinsatz:0,
+        equity:totals.marktwert-totals.restschuld,
+        faktor:totals.nkmJahr>0?totals.kaufpreis/totals.nkmJahr:0,
+        bruttoRendite:totals.kaufpreis>0?totals.nkmJahr/totals.kaufpreis:0,
+    }),[totals]);
+
+    const unbelastet=useMemo(()=>objekte.filter(o=>o.restschuld===0||o.restschuld<100),[objekte]);
+
+    if(loading)return <div style={{padding:48,textAlign:'center',color:'var(--text-3)'}}>Lade Daten...</div>;
+    if(isApiMode&&!authed) return (<LoginScreen onLogin={doLogin}/>);
+
+    return(<div>
+        {/* Header */}
+        <header className="app-header">
+            <div>
+                <h1>Portfolio Dashboard</h1>
+                <div className="sub">Johann Elias Landsmann &middot; {totals.count} Objekte &middot; {totals.we} WE &middot; {fmt.n(totals.wfl)} m&sup2;</div>
+            </div>
+            <div className="meta">
+                <strong>PR-2026-001</strong><br/>Stand: {TODAY.toLocaleDateString('de-DE')}
+            </div>
+        </header>
+
+        {/* Tab Bar */}
+        <div className="tab-bar no-print">
+            <button className={`tab-btn ${view==='internal'?'active':''}`} onClick={()=>setView('internal')}>Portfoliosteuerung</button>
+            <button className={`tab-btn ${view==='bank'?'active':''}`} onClick={()=>setView('bank')}>Bankenauszug</button>
+            <button className={`tab-btn ${view==='tax'?'active':''}`} onClick={()=>setView('tax')}>Steuerprognose</button>
+            <div className="tab-actions">
+                {isApiMode&&<button className={`btn ${saveStatus==='saved'?'btn-s':saveStatus==='error'?'btn-d':'btn-p'}`} onClick={saveToExcel} disabled={saveStatus==='saving'}>
+                    {saveStatus==='saving'?'Speichere...':saveStatus==='saved'?'Gespeichert':saveStatus==='error'?'Fehler':'In Excel speichern'}
+                </button>}
+                <button className="btn" onClick={()=>window.print()}>Drucken / PDF</button>
+                {isApiMode&&<button className="btn btn-d" onClick={doLogout} style={{padding:'7px 10px',fontSize:12}}>Logout</button>}
+            </div>
+        </div>
+
+        {/* Views */}
+        <div className="container">
+            {view==='internal'&&<InternalView objekte={objekte} totals={totals} pKpi={pKpi} onEdit={setEditObj}/>}
+            {view==='bank'&&<BankView objekte={objekte} totals={totals} pKpi={pKpi} unbelastet={unbelastet}/>}
+            {view==='tax'&&<TaxView objekte={objekte}/>}
+        </div>
+
+        <footer className="footer">
+            <div><strong style={{color:'var(--blue)'}}>PR-2026-001</strong> &middot; Portfolio Dashboard v5</div>
+            <div>&copy; Elias Landsmann, {TODAY.toLocaleDateString('de-DE')}</div>
+        </footer>
+
+        {editObj&&<EditModal obj={editObj} onSave={(u)=>{updateObj(editObj.id,u);setEditObj(null)}} onClose={()=>setEditObj(null)}/>}
+    </div>);
+};
+
+// ═══════════════════════════════════════════════
+// ANSICHT A: PORTFOLIOSTEUERUNG (Intern)
+// ═══════════════════════════════════════════════
+const InternalView=({objekte,totals,pKpi,onEdit})=>{
+    return(<>
+        {/* KPI Dashboard */}
+        <div className="card" style={{marginBottom:20}}>
+            <div className="kpi-row c4">
+                <div className="kpi"><div className="label">Marktwert</div><div className="val blue">{fmt.eur(totals.marktwert)}</div><div className="sub">Portfolio gesamt</div></div>
+                <div className="kpi"><div className="label">Equity (MW-RS)</div><div className="val green">{fmt.eur(pKpi.equity)}</div><div className="sub">Stille Reserven</div></div>
+                <div className="kpi"><div className="label">Cashflow p.a.</div><div className={`val ${totals.cfInternal>=0?'green':'red'}`}>{fmt.eur(totals.cfInternal)}</div><div className="sub">{fmt.eur(totals.cfInternal/12)}/Mon (echte BWK)</div></div>
+                <div className="kpi"><div className="label">LTV</div><div className={`val ${pKpi.ltv<=0.6?'green':pKpi.ltv<=0.8?'orange':'red'}`}>{fmt.pct1(pKpi.ltv)}</div><div className="sub">RS {fmt.eur(totals.restschuld)}</div></div>
+            </div>
+            <div className="kpi-row c4">
+                <div className="kpi"><div className="label">DSCR</div><div className={`val sm ${pKpi.dscrInt>=1.2?'green':pKpi.dscrInt>=1?'orange':'red'}`}>{fmt.n(pKpi.dscrInt,2)}x</div><div className="sub">echte BWK</div></div>
+                <div className="kpi"><div className="label">Faktor</div><div className="val sm">{fmt.n(pKpi.faktor,1)}x</div><div className="sub">KP/NKM p.a.</div></div>
+                <div className="kpi"><div className="label">Brutto-Rendite</div><div className="val sm">{fmt.pct(pKpi.bruttoRendite)}</div><div className="sub">NKM/GIK</div></div>
+                <div className="kpi"><div className="label">ROE</div><div className={`val sm ${pKpi.roeInt>=0?'green':'red'}`}>{fmt.pct(pKpi.roeInt)}</div><div className="sub">CF/EK</div></div>
+            </div>
+        </div>
+
+        {/* Objekttabelle */}
+        <div className="card" style={{marginBottom:20}}>
+            <div className="card-head"><h3>Objektuebersicht &middot; Vollansicht</h3></div>
+            <table>
+                <thead><tr>
+                    <th>Objekt</th><th className="r">KP/GIK</th><th className="r">MW</th>
+                    <th className="r">NKM/Mon</th><th className="r">BWK echt</th><th className="r">CF/Mon</th>
+                    <th className="r">RS</th><th className="r">Zins/Tilg</th><th className="c">Spek.</th>
+                    <th className="c">Status</th><th className="c no-print">Edit</th>
+                </tr></thead>
+                <tbody>
+                    {objekte.map(obj=>{
+                        const c=calcInternal(obj);
+                        const sp=spekStatus(obj.spekFrist);
+                        return(<tr key={obj.id}>
+                            <td><div className="obj-name"><div className="obj-bar" style={{background:c.cashflowJahr>=0?'var(--green)':'var(--red)'}}/>
+                                <div><div className="obj-id">{obj.name} <span className="obj-meta">{obj.art} {obj.we>1?`${obj.we}WE`:''}</span></div>
+                                <div className="obj-addr">{obj.adresse}</div></div></div>
+                            </td>
+                            <td className="r">{fmt.eur(obj.kaufpreis)}<br/><span style={{fontSize:10,color:'var(--text-3)'}}>GIK {fmt.eur(c.gik)}</span></td>
+                            <td className="r" style={{color:'var(--blue)',fontWeight:600,fontFamily:'JetBrains Mono',fontSize:12}}>{fmt.eur(obj.marktwert)}<br/><span style={{fontSize:10,color:c.wertsteigerungPct>=0?'var(--green)':'var(--red)'}}>{c.wertsteigerungPct>=0?'+':''}{fmt.pct1(c.wertsteigerungPct)}</span></td>
+                            <td className="r">{fmt.eur(obj.nkmMonat)}<br/><span style={{fontSize:10,color:'var(--text-3)'}}>{obj.wohnflaeche>0?fmt.n(obj.nkmMonat/obj.wohnflaeche,2):'–'} /m&sup2;</span></td>
+                            <td className="r">{fmt.eur(c.bwkReal/12)}<br/><span style={{fontSize:10,color:'var(--text-3)'}}>{fmt.eur(c.bwkReal)} p.a.</span></td>
+                            <td className="r"><span style={{color:c.cashflowMonat>=0?'var(--green)':'var(--red)',fontWeight:600,fontFamily:'JetBrains Mono',fontSize:12}}>{c.cashflowMonat>=0?'+':''}{fmt.eur(c.cashflowMonat)}</span></td>
+                            <td className="r">{obj.restschuld>0?<>{fmt.eur(obj.restschuld)}<br/><span style={{fontSize:10,color:'var(--text-3)'}}>LTV {fmt.pct1(c.ltv)}</span></>:'schuldenfrei'}</td>
+                            <td className="r">{obj.zinssatz>0?<>{fmt.pct1(obj.zinssatz)}/{fmt.pct1(obj.tilgungssatz)}<br/><span style={{fontSize:10,color:'var(--text-3)'}}>bis {fmt.dt(obj.zinsbindungsEnde)}</span></>:'–'}</td>
+                            <td className="c"><div className="spek"><div className="spek-bar"><div className="spek-fill" style={{width:`${sp.pct}%`,background:sp.color}}/></div><span style={{color:sp.color,fontWeight:600,fontSize:10}}>{sp.label}</span></div></td>
+                            <td className="c"><span className={`dot ${c.dscr>=1.2||obj.restschuld===0?'dot-g':c.dscr>=1?'dot-y':'dot-r'}`}/></td>
+                            <td className="c no-print"><button className="btn" style={{padding:'4px 8px',fontSize:11}} onClick={()=>onEdit(obj)}>Edit</button></td>
+                        </tr>);
+                    })}
+                    <tr className="sum">
+                        <td>Portfolio ({totals.count} Obj.)</td>
+                        <td className="r">{fmt.eur(totals.kaufpreis)}</td>
+                        <td className="r" style={{color:'var(--blue)'}}>{fmt.eur(totals.marktwert)}</td>
+                        <td className="r">{fmt.eur(totals.nkmJahr/12)}</td>
+                        <td className="r">{fmt.eur(totals.bwkInternal/12)}</td>
+                        <td className="r" style={{color:totals.cfInternal>=0?'var(--green)':'var(--red)'}}>{fmt.eur(totals.cfInternal/12)}</td>
+                        <td className="r">{fmt.eur(totals.restschuld)}</td>
+                        <td className="r"></td><td></td><td></td><td className="no-print"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {/* Wertentwicklung */}
+        <div className="card" style={{marginBottom:20}}>
+            <div className="card-head"><h3>Wertentwicklung &middot; GIK vs Marktwert</h3></div>
+            <table>
+                <thead><tr><th>Objekt</th><th className="r">GIK</th><th className="r">Marktwert</th><th className="r">Wertsteigerung</th><th className="r">Stille Reserven</th><th className="c">Performance</th></tr></thead>
+                <tbody>
+                    {objekte.map(obj=>{
+                        const c=calcInternal(obj);
+                        return(<tr key={obj.id}>
+                            <td><span style={{fontWeight:600}}>{obj.name}</span> <span className="obj-meta">{obj.art}</span></td>
+                            <td className="r">{fmt.eur(c.gik)}</td>
+                            <td className="r" style={{fontWeight:600,color:'var(--blue)'}}>{fmt.eur(obj.marktwert)}</td>
+                            <td className="r"><span style={{color:c.wertsteigerungEur>=0?'var(--green)':'var(--red)'}}>{c.wertsteigerungEur>=0?'+':''}{fmt.eur(c.wertsteigerungEur)} ({c.wertsteigerungPct>=0?'+':''}{fmt.pct1(c.wertsteigerungPct)})</span></td>
+                            <td className="r" style={{fontWeight:600,color:'var(--green)'}}>{fmt.eur(c.stilleReserven)}</td>
+                            <td className="c"><span className={`tag ${c.wertsteigerungPct>=0.2?'tag-green':c.wertsteigerungPct>=0?'tag-blue':'tag-red'}`}>{c.wertsteigerungPct>=0.2?'Stark':c.wertsteigerungPct>=0.1?'Gut':'Neutral'}</span></td>
+                        </tr>);
+                    })}
+                    <tr className="sum">
+                        <td>Portfolio</td>
+                        <td className="r">{fmt.eur(totals.gik)}</td>
+                        <td className="r" style={{color:'var(--blue)'}}>{fmt.eur(totals.marktwert)}</td>
+                        <td className="r" style={{color:'var(--green)'}}>+{fmt.eur(totals.marktwert-totals.gik)} (+{fmt.pct1(totals.gik>0?(totals.marktwert-totals.gik)/totals.gik:0)})</td>
+                        <td className="r" style={{color:'var(--green)'}}>{fmt.eur(pKpi.equity)}</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {/* Finanzierung Detail */}
+        <div className="card" style={{marginBottom:20}}>
+            <div className="card-head"><h3>Finanzierung &middot; Detail</h3></div>
+            <table>
+                <thead><tr><th>Objekt</th><th className="r">Bew. Kredit</th><th className="r">Restschuld</th><th className="r">Zinssatz</th><th className="r">Tilgung</th><th className="r">Rate/Mon</th><th className="r">Zinsbindung</th><th className="r">Rest-LFZ</th></tr></thead>
+                <tbody>
+                    {objekte.filter(o=>o.restschuld>0).map(obj=>(<tr key={obj.id}>
+                        <td><span style={{fontWeight:600}}>{obj.name}</span></td>
+                        <td className="r">{fmt.eur(obj.bewKredit)}</td>
+                        <td className="r" style={{fontWeight:600}}>{fmt.eur(obj.restschuld)}</td>
+                        <td className="r">{fmt.pct(obj.zinssatz)}</td>
+                        <td className="r">{fmt.pct(obj.tilgungssatz)}</td>
+                        <td className="r" style={{fontWeight:600}}>{fmt.eur(obj.kreditrate)}</td>
+                        <td className="r">{fmt.dt(obj.zinsbindungsEnde)}</td>
+                        <td className="r">{obj.restLfz>0?`${fmt.n(obj.restLfz,1)} J.`:'–'}</td>
+                    </tr>))}
+                    {objekte.filter(o=>o.restschuld===0||o.restschuld<100).length>0&&<tr className="sum">
+                        <td colSpan="8" style={{color:'var(--green)'}}>{objekte.filter(o=>o.restschuld===0||o.restschuld<100).length} Objekte schuldenfrei: {objekte.filter(o=>o.restschuld===0||o.restschuld<100).map(o=>o.name).join(', ')}</td>
+                    </tr>}
+                </tbody>
+            </table>
+        </div>
+    </>);
+};
+
+// ═══════════════════════════════════════════════
+// ANSICHT B: BANKENAUSZUG (Extern)
+// ═══════════════════════════════════════════════
+const BankView=({objekte,totals,pKpi,unbelastet})=>{
+    const bankCalcs=objekte.map(o=>({...o,c:calcBank(o)}));
+    const bankNoi=bankCalcs.reduce((s,o)=>s+o.c.noiJahr,0);
+    const bankCF=bankCalcs.reduce((s,o)=>s+o.c.cashflowJahr,0);
+    const bankUeberdeckung=bankCalcs.reduce((s,o)=>s+o.c.ueberdeckung,0);
+    const dscrBank=totals.kd>0?bankNoi/totals.kd:0;
+    const unbelastetMW=unbelastet.reduce((s,o)=>s+o.marktwert,0);
+
+    return(<>
+        {/* Portfolio Summary */}
+        <div className="bank-section">
+            <div className="bank-title">Portfolio-Uebersicht</div>
+            <div className="bank-sub">Bestandsimmobilien Johann Elias Landsmann &middot; Stichtag {TODAY.toLocaleDateString('de-DE')}</div>
+
+            <div className="card" style={{marginBottom:16}}>
+                <div className="kpi-row c3">
+                    <div className="kpi"><div className="label">Objekte</div><div className="val blue">{totals.count}</div><div className="sub">{totals.we} Wohneinheiten</div></div>
+                    <div className="kpi"><div className="label">Wohnflaeche</div><div className="val">{fmt.n(totals.wfl)} m&sup2;</div></div>
+                    <div className="kpi"><div className="label">Nutzungsart</div><div className="val sm">VuV Wohnen</div><div className="sub">100% Vermietung</div></div>
+                </div>
+            </div>
+
+            <div className="stat-grid">
+                <div className="stat-box">
+                    <h4>Vermoegen</h4>
+                    <div className="stat-row"><span className="sl">Verkehrswert gesamt</span><span className="sv blue">{fmt.eur(totals.marktwert)}</span></div>
+                    <div className="stat-row"><span className="sl">Restschulden gesamt</span><span className="sv">{fmt.eur(totals.restschuld)}</span></div>
+                    <div className="stat-row"><span className="sl">Equity (Nettovermoegen)</span><span className="sv green">{fmt.eur(pKpi.equity)}</span></div>
+                    <div className="stat-row"><span className="sl">Unbelastete Objekte</span><span className="sv green">{unbelastet.length} ({fmt.eur(unbelastetMW)})</span></div>
+                </div>
+                <div className="stat-box">
+                    <h4>Cashflow (Bankansatz 15% BWK)</h4>
+                    <div className="stat-row"><span className="sl">Mieteinnahmen p.a.</span><span className="sv">{fmt.eur(totals.nkmJahr)}</span></div>
+                    <div className="stat-row"><span className="sl">./. 15% BWK</span><span className="sv red">- {fmt.eur(totals.nkmJahr*0.15)}</span></div>
+                    <div className="stat-row"><span className="sl">= NOI p.a.</span><span className="sv">{fmt.eur(bankNoi)}</span></div>
+                    <div className="stat-row"><span className="sl">./. Kapitaldienst p.a.</span><span className="sv">- {fmt.eur(totals.kd)}</span></div>
+                    <div className="stat-row"><span className="sl">= Ueberdeckung p.a.</span><span className={`sv ${bankUeberdeckung>=0?'green':'red'}`}>{bankUeberdeckung>=0?'+':''}{fmt.eur(bankUeberdeckung)}</span></div>
+                </div>
+            </div>
+        </div>
+
+        {/* KPIs Bank */}
+        <div className="bank-section">
+            <div className="card">
+                <div className="kpi-row c4">
+                    <div className="kpi"><div className="label">DSCR</div><div className={`val ${dscrBank>=1.2?'green':dscrBank>=1?'orange':'red'}`}>{fmt.n(dscrBank,2)}x</div><div className="sub">{dscrBank>=1.2?'Ueber Bankstandard':'Unter 1,2x'}</div></div>
+                    <div className="kpi"><div className="label">LTV Portfolio</div><div className={`val ${pKpi.ltv<=0.6?'green':pKpi.ltv<=0.8?'orange':'red'}`}>{fmt.pct1(pKpi.ltv)}</div><div className="sub">Loan-to-Value</div></div>
+                    <div className="kpi"><div className="label">Brutto-Rendite</div><div className="val">{fmt.pct(pKpi.bruttoRendite)}</div><div className="sub">NKM / Kaufpreis</div></div>
+                    <div className="kpi"><div className="label">Faktor</div><div className="val">{fmt.n(pKpi.faktor,1)}x</div><div className="sub">KP / NKM p.a.</div></div>
+                </div>
+            </div>
+        </div>
+
+        {/* Objekttabelle Bank */}
+        <div className="bank-section">
+            <div className="bank-title">Objektuebersicht</div>
+            <div className="bank-sub">Detailansicht aller Bestandsobjekte</div>
+            <div className="card">
+                <table>
+                    <thead><tr>
+                        <th>Objekt</th><th className="c">Art</th><th className="c">WE</th><th className="r">Flaeche</th>
+                        <th className="r">Verkehrswert</th><th className="r">Restschuld</th><th className="r">Miete/Mon</th>
+                        <th className="r">DSCR</th><th className="c">Status</th>
+                    </tr></thead>
+                    <tbody>
+                        {bankCalcs.map(obj=>(<tr key={obj.id}>
+                            <td><div className="obj-name"><div className="obj-bar"/><div><div className="obj-id">{obj.name}</div><div className="obj-addr">{obj.adresse}</div></div></div></td>
+                            <td className="c"><span className="tag tag-blue">{obj.art}</span></td>
+                            <td className="c">{obj.we}</td>
+                            <td className="r">{fmt.n(obj.wohnflaeche)} m&sup2;</td>
+                            <td className="r" style={{fontWeight:600,color:'var(--blue)'}}>{fmt.eur(obj.marktwert)}</td>
+                            <td className="r">{obj.restschuld>0?fmt.eur(obj.restschuld):<span className="tag tag-green">frei</span>}</td>
+                            <td className="r">{fmt.eur(obj.nkmMonat)}</td>
+                            <td className="r">{obj.c.dscr>0?<span style={{color:obj.c.dscr>=1.2?'var(--green)':obj.c.dscr>=1?'var(--orange)':'var(--red)',fontWeight:600}}>{fmt.n(obj.c.dscr,2)}x</span>:'–'}</td>
+                            <td className="c"><span className={`dot ${obj.c.dscr>=1.2||obj.restschuld===0?'dot-g':obj.c.dscr>=1?'dot-y':'dot-r'}`}/></td>
+                        </tr>))}
+                        <tr className="sum">
+                            <td>Summe</td><td></td><td className="c">{totals.we}</td><td className="r">{fmt.n(totals.wfl)} m&sup2;</td>
+                            <td className="r" style={{color:'var(--blue)'}}>{fmt.eur(totals.marktwert)}</td>
+                            <td className="r">{fmt.eur(totals.restschuld)}</td>
+                            <td className="r">{fmt.eur(totals.nkmJahr/12)}</td>
+                            <td className="r">{fmt.n(dscrBank,2)}x</td><td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {/* NKM Ueberdeckung Bank */}
+        <div className="bank-section">
+            <div className="bank-title">Kapitaldienstfaehigkeit (NKM-Analyse)</div>
+            <div className="bank-sub">Bankansatz: Nettokaltmiete abzgl. 15% Bewirtschaftungskosten</div>
+            <div className="card">
+                <table>
+                    <thead><tr><th>Objekt</th><th className="r">NKM p.a.</th><th className="r">- 15% BWK</th><th className="r">= NOI</th><th className="r">Kapitaldienst</th><th className="r">Ueberdeckung</th><th className="c">Deckung</th></tr></thead>
+                    <tbody>
+                        {bankCalcs.map(obj=>(<tr key={obj.id}>
+                            <td style={{fontWeight:600}}>{obj.name}</td>
+                            <td className="r">{fmt.eur(obj.c.nkmJahr)}</td>
+                            <td className="r" style={{color:'var(--red)'}}>- {fmt.eur(obj.c.bwk15)}</td>
+                            <td className="r">{fmt.eur(obj.c.noiJahr)}</td>
+                            <td className="r">{fmt.eur(obj.c.kapitaldienstJahr)}</td>
+                            <td className="r"><span style={{color:obj.c.ueberdeckung>=0?'var(--green)':'var(--red)',fontWeight:600}}>{obj.c.ueberdeckung>=0?'+':''}{fmt.eur(obj.c.ueberdeckung)}</span></td>
+                            <td className="c">{obj.c.kapitaldienstJahr>0?<><span className="pbar"><span className="pfill" style={{width:`${Math.min(obj.c.dscr*100/1.5,100)}%`,background:obj.c.dscr>=1.2?'var(--green)':obj.c.dscr>=1?'var(--orange)':'var(--red)'}}/></span><span className="mono" style={{fontSize:10}}>{fmt.pct1(obj.c.dscr)}</span></>:'–'}</td>
+                        </tr>))}
+                        <tr className="sum">
+                            <td>Portfolio</td>
+                            <td className="r">{fmt.eur(totals.nkmJahr)}</td>
+                            <td className="r" style={{color:'var(--red)'}}>- {fmt.eur(totals.nkmJahr*0.15)}</td>
+                            <td className="r">{fmt.eur(bankNoi)}</td>
+                            <td className="r">{fmt.eur(totals.kd)}</td>
+                            <td className="r" style={{color:bankUeberdeckung>=0?'var(--green)':'var(--red)',fontWeight:600}}>{bankUeberdeckung>=0?'+':''}{fmt.eur(bankUeberdeckung)}</td>
+                            <td className="c" style={{fontWeight:600}}>{fmt.n(dscrBank,2)}x</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {/* Sicherheiten */}
+        <div className="bank-section">
+            <div className="bank-title">Sicherheiten</div>
+            <div className="stat-grid">
+                <div className="stat-box">
+                    <h4>Unbelastete Objekte (als Sicherheit verfuegbar)</h4>
+                    {unbelastet.map(obj=>(<div key={obj.id} className="stat-row">
+                        <span className="sl">{obj.name} - {obj.adresse}</span>
+                        <span className="sv green">{fmt.eur(obj.marktwert)}</span>
+                    </div>))}
+                    <div className="stat-row" style={{borderTop:'2px solid var(--border)',marginTop:4,paddingTop:6}}>
+                        <span className="sl" style={{fontWeight:600}}>Summe unbelastet</span>
+                        <span className="sv green">{fmt.eur(unbelastet.reduce((s,o)=>s+o.marktwert,0))}</span>
+                    </div>
+                </div>
+                <div className="stat-box">
+                    <h4>Beleihungswerte (60% Ansatz)</h4>
+                    <div className="stat-row"><span className="sl">Verkehrswert Portfolio</span><span className="sv">{fmt.eur(totals.marktwert)}</span></div>
+                    <div className="stat-row"><span className="sl">Beleihungswert (60%)</span><span className="sv blue">{fmt.eur(totals.marktwert*0.6)}</span></div>
+                    <div className="stat-row"><span className="sl">./. bestehende Belastungen</span><span className="sv">- {fmt.eur(totals.restschuld)}</span></div>
+                    <div className="stat-row" style={{borderTop:'2px solid var(--border)',marginTop:4,paddingTop:6}}>
+                        <span className="sl" style={{fontWeight:600}}>Freie Beleihungsreserve</span>
+                        <span className={`sv ${(totals.marktwert*0.6-totals.restschuld)>=0?'green':'red'}`}>{fmt.eur(totals.marktwert*0.6-totals.restschuld)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </>);
+};
+
+// ═══════════════════════════════════════════════
+// ANSICHT C: STEUERPROGNOSE (RND-Gutachten)
+// ═══════════════════════════════════════════════
+const TaxView=({objekte})=>{
+    const [zve,setZve]=useState(48000);
+    const [gba,setGba]=useState(0.85);
+    const [ki,setKi]=useState(0.09);
+    const [mst,setMst]=useState(0.015);
+    const [jr,setJr]=useState(20);
+
+    // Sanierungsplanung: {objId: [J1, J2, J3]}
+    const [sanPlan,setSanPlan]=useState(()=>{
+        const init={};
+        objekte.forEach(o=>{const k=o.id||o.name;if(RND_DATA[k]||RND_DATA[o.name])init[k]=[o.renovierung||0,0,0]});
+        return init;
+    });
+    const upSan=(id,j,v)=>setSanPlan(p=>({...p,[id]:p[id].map((x,i)=>i===j?(+v||0):x)}));
+
+    const params={zve,gba,kist:ki,mietSt:mst,jahre:jr};
+
+    // Projections with sanierung plan
+    const projs=objekte.map(o=>{const k=o.id||o.name;return calcTaxV2(o,params,sanPlan[k]||[0,0,0])}).filter(Boolean);
+    // Baseline: no sanierung (nur AfA + Zinsen)
+    const projsBase=objekte.map(o=>calcTaxV2(o,params,[0,0,0])).filter(Boolean);
+
+    if(!projs.length)return<div className="card"><div className="card-body" style={{textAlign:'center',padding:48,color:'var(--text-3)'}}>Keine Objekte mit RND-Gutachten konfiguriert</div></div>;
+
+    const stOhne=calcSteuer(zve,ki).gesamt;
+
+    // Combined with sanierung
+    const combined=[];let cumG=0;
+    for(let j=0;j<jr;j++){
+        let vT=0;projs.forEach(p=>{if(j<p.rows.length)vT+=p.rows[j].vuv});
+        const em=calcSteuer(Math.max(0,zve+vT),ki).gesamt;
+        const er=stOhne-em;cumG+=er;
+        combined.push({j:j+1,vT,zvM:zve+vT,stOhne,stMit:em,er,cumG,
+            pts:projs.map(p=>j<p.rows.length?p.rows[j].vuv:0)});
+    }
+
+    // Combined baseline (no sanierung)
+    let cumGBase=0;
+    for(let j=0;j<jr;j++){
+        let vT=0;projsBase.forEach(p=>{if(j<p.rows.length)vT+=p.rows[j].vuv});
+        const em=calcSteuer(Math.max(0,zve+vT),ki).gesamt;
+        const er=stOhne-em;cumGBase+=er;
+    }
+
+    // KPIs
+    const ersJ1=combined[0]?.er||0;
+    const vuvJ1=combined[0]?.vT||0;
+    const maxEr=Math.max(...combined.map(r=>r.er));
+    const cumTilg=projs.reduce((s,p)=>{const last=p.rows[p.rows.length-1];return s+(last?p.startRS-last.rs:0)},0);
+    const grenz=calcGrenz(zve,ki);
+    const zveMitVuVJ1=zve+vuvJ1;
+    const grenzMitVuV=calcGrenz(Math.max(1,zveMitVuVJ1),ki);
+    const freibetragMon=Math.round(ersJ1/12);
+    const totalSan=projs.reduce((s,p)=>s+p.san3J,0);
+    const sanEffekt=cumG-cumGBase; // Additional savings from sanierung
+    const nettoSan=totalSan>0?totalSan-Math.max(0,sanEffekt):0;
+    const effStSatz=zve>0?stOhne/zve:0;
+
+    // Warnings
+    const warnings=[];
+    projs.forEach(p=>{
+        if(p.anah)warnings.push({t:'d',m:`${p.obj.id||p.obj.name}: 15%-Grenze \u00fcberschritten! Sanierung ${fmt.eur(p.san3J)} > Grenze ${fmt.eur(p.g15)} \u2192 Gesamte Sanierung wird aktiviert und \u00fcber ${p.rnd}J abgeschrieben (kein Sofortabzug). Pr\u00fcfe ob Verteilung auf J4+ m\u00f6glich.`});
+        else if(p.budgetPct>0.85&&p.san3J>0)warnings.push({t:'w',m:`${p.obj.id||p.obj.name}: 15%-Budget zu ${(p.budgetPct*100).toFixed(0)}% ausgesch\u00f6pft. Nur noch ${fmt.eur(p.budgetFrei)} frei in der 3-Jahres-Frist (\u00a7 6 Abs. 1 Nr. 1a EStG).`});
+    });
+    if(zveMitVuVJ1<0)warnings.push({t:'d',m:`VuV-Verlust dr\u00fcckt ZVE in J1 auf ${fmt.eur(zveMitVuVJ1)}. Verlust von ${fmt.eur(Math.abs(zveMitVuVJ1))} wird nicht sofort verrechnet sondern vorgetragen (\u00a7 10d EStG). Erw\u00e4ge Sanierung auf 2+ Jahre zu verteilen.`});
+    if(totalSan>0&&sanEffekt<totalSan*0.25)warnings.push({t:'w',m:`Steuereffekt der Sanierung nur ${fmt.pct1(totalSan>0?sanEffekt/totalSan:0)} der Brutto-Kosten. Timing pr\u00fcfen \u2013 Abflussprinzip (\u00a7 11 EStG) erlaubt Verlagerung der Zahlung ins optimale Jahr.`});
+
+    return(<>
+        {/* Settings */}
+        <div className="tax-bar">
+            <label>zvE (ohne VuV)<input type="number" value={zve} onChange={e=>setZve(+e.target.value||0)} step="1000"/></label>
+            <label>Geb&auml;udeanteil<select value={gba} onChange={e=>setGba(+e.target.value)}><option value={0.80}>80%</option><option value={0.85}>85%</option><option value={0.90}>90%</option></select></label>
+            <label>Kirchensteuer<select value={ki} onChange={e=>setKi(+e.target.value)}><option value={0}>Keine</option><option value={0.08}>8%</option><option value={0.09}>9% (TH)</option></select></label>
+            <label>Mietsteigerung<input type="number" value={(mst*100).toFixed(1)} onChange={e=>setMst((+e.target.value||0)/100)} step="0.5" style={{width:70}}/> %</label>
+            <label>Jahre<select value={jr} onChange={e=>setJr(+e.target.value)}><option value={5}>5</option><option value={10}>10</option><option value={13}>13</option><option value={20}>20</option></select></label>
+        </div>
+
+        {/* KPIs Row 1 */}
+        <div className="card" style={{marginBottom:2}}>
+            <div className="kpi-row c4">
+                <div className="kpi"><div className="label">Steuerersparnis Jahr 1</div><div className="val green">{fmt.eur(ersJ1)}</div><div className="sub">Erstattung vom FA</div></div>
+                <div className="kpi"><div className="label">Freibetrag / Monat</div><div className="val green">{fmt.eur(freibetragMon)}</div><div className="sub">mehr Netto (&sect; 39a EStG)</div></div>
+                <div className="kpi"><div className="label">Grenzsteuersatz</div><div className="val blue">{fmt.pct1(grenz)}</div><div className="sub">bei zvE {fmt.eur(zve)} (inkl. KiSt)</div></div>
+                <div className="kpi"><div className="label">Gesamt {jr} Jahre</div><div className="val green">{fmt.eur(cumG)}</div><div className="sub">kumuliert</div></div>
+            </div>
+        </div>
+        <div className="card" style={{marginBottom:20}}>
+            <div className="kpi-row c4">
+                <div className="kpi"><div className="label">VuV-Verlust Jahr 1</div><div className="val red">{fmt.eur(vuvJ1)}</div><div className="sub">steuerlich absetzbar</div></div>
+                <div className="kpi"><div className="label">Mehr-AfA vs 2%</div><div className="val blue">{fmt.eur(projs.reduce((s,p)=>s+p.mehrAfa,0))}</div><div className="sub">pro Jahr durch RND</div></div>
+                <div className="kpi"><div className="label">{totalSan>0?'Netto-Sanierungskosten':'Eff. Steuersatz'}</div><div className={`val ${totalSan>0?'orange':'blue'}`}>{totalSan>0?fmt.eur(nettoSan):fmt.pct1(effStSatz)}</div><div className="sub">{totalSan>0?`Brutto ${fmt.eur(totalSan)} \u2212 Steuereffekt ${fmt.eur(sanEffekt)}`:`ohne VuV: ${fmt.pct1(effStSatz)}`}</div></div>
+                <div className="kpi"><div className="label">zvE mit VuV (J1)</div><div className={`val ${zveMitVuVJ1<0?'red':zveMitVuVJ1<12096?'orange':''}`}>{fmt.eur(Math.max(0,zveMitVuVJ1))}</div><div className="sub">{zveMitVuVJ1<0?`${fmt.eur(Math.abs(zveMitVuVJ1))} Verlust vorgetragen`:`Grenz: ${fmt.pct1(grenzMitVuV)}`}</div></div>
+            </div>
+        </div>
+
+        {/* Warnings */}
+        {warnings.length>0&&<div className="warn-list">
+            {warnings.map((w,i)=><div key={i} className={`warn-box ${w.t==='d'?'wd':w.t==='w'?'ww':'wi'}`}>
+                <span className="warn-icon">{w.t==='d'?'\u26D4':'\u26A0\uFE0F'}</span><span>{w.m}</span>
+            </div>)}
+        </div>}
+
+        {/* 15%-Budget + Freibetrag */}
+        <div className="two-col">
+            {/* Left: 15%-Budget-Tracker */}
+            <div>
+                <div className="card" style={{height:'100%'}}>
+                    <div className="card-head"><h3>15%-Budget &middot; &sect; 6 Abs. 1 Nr. 1a EStG</h3></div>
+                    <div className="card-body">
+                        {projs.map(p=>{
+                            const pct=Math.min(100,p.budgetPct*100);
+                            const col=p.anah?'var(--red)':pct>85?'var(--orange)':'var(--green)';
+                            return(<div key={p.obj.id} style={{marginBottom:16}}>
+                                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,fontWeight:600,marginBottom:4}}>
+                                    <span>{p.obj.id||p.obj.name}</span>
+                                    <span style={{color:col}}>{p.anah?'\u00dcberschritten':fmt.eur(p.budgetFrei)+' frei'}</span>
+                                </div>
+                                <div className="budget-bar">
+                                    <div className="budget-fill" style={{width:`${pct}%`,background:col}}/>
+                                    <span className="budget-pct">{pct.toFixed(0)}%</span>
+                                </div>
+                                <div className="budget-row"><span className="bl">AK Geb&auml;ude ({fmt.pct1(gba)})</span><span className="bv">{fmt.eur(p.akGeb)}</span></div>
+                                <div className="budget-row"><span className="bl">15%-Grenze</span><span className="bv">{fmt.eur(p.g15)}</span></div>
+                                <div className="budget-row"><span className="bl">Sanierung 3J geplant</span><span className="bv" style={{color:col}}>{fmt.eur(p.san3J)}</span></div>
+                            </div>);
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            {/* Right: Lohnsteuerfreibetrag */}
+            <div>
+                <div className="fb-card" style={{height:'100%',display:'flex',flexDirection:'column'}}>
+                    <h3>Lohnsteuerfreibetrag &middot; &sect; 39a EStG</h3>
+                    <div className="fb-sub">Sofort h&ouml;heres Netto durch Eintragung des VuV-Verlustes in ELStAM</div>
+                    <div className="fb-grid" style={{flex:1}}>
+                        <div className="fb-item">
+                            <div className="fb-label">VuV-Verlust J1</div>
+                            <div className="fb-val" style={{color:'var(--red)'}}>{fmt.eur(Math.abs(Math.min(0,vuvJ1)))}</div>
+                            <div className="fb-note">= Freibetrag p.a.</div>
+                        </div>
+                        <div className="fb-item">
+                            <div className="fb-label">Freibetrag / Monat</div>
+                            <div className="fb-val" style={{color:'var(--blue)'}}>{fmt.eur(Math.round(Math.abs(Math.min(0,vuvJ1))/12))}</div>
+                            <div className="fb-note">in ELStAM eintragen</div>
+                        </div>
+                        <div className="fb-item">
+                            <div className="fb-label">Mehr Netto / Monat</div>
+                            <div className="fb-val" style={{color:'var(--green)'}}>{fmt.eur(freibetragMon)}</div>
+                            <div className="fb-note">auf der Gehaltsabrechnung</div>
+                        </div>
+                        <div className="fb-item">
+                            <div className="fb-label">Ersparnis J1</div>
+                            <div className="fb-val" style={{color:'var(--green)'}}>{fmt.eur(ersJ1)}</div>
+                            <div className="fb-note">gesamt im Jahr</div>
+                        </div>
+                    </div>
+                    <div className="fb-hint">
+                        <strong>Ablauf:</strong> Antrag bei ELSTER &rarr; FA tr&auml;gt Freibetrag in ELStAM ein &rarr; Arbeitgeber ruft ab &rarr; sofort h&ouml;heres Netto.<br/>
+                        <strong>Pflicht:</strong> Bei Freibetrag &rarr; Einkommensteuererkl&auml;rung verpflichtend (&sect; 46 Abs. 2 Nr. 4 EStG).<br/>
+                        {vuvJ1>=0&&<><strong>Hinweis:</strong> VuV ist positiv &ndash; kein Freibetrag m&ouml;glich in J1.</>}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Sanierungsplanung */}
+        <div className="card san-section">
+            <div className="card-head"><h3>Sanierungsplanung &middot; Erhaltungsaufwand auf Jahre verteilen</h3></div>
+            <div className="card-body">
+                <div style={{fontSize:11,color:'var(--text-3)',marginBottom:12}}>Verteile den Erhaltungsaufwand auf die ersten 3 Jahre. Nur tats&auml;chlich bezahlte Betr&auml;ge sind absetzbar (&sect; 11 Abs. 2 EStG, Abflussprinzip). Die 15%-Grenze wird live gepr&uuml;ft.</div>
+                {projs.map(p=>{
+                    const k=p.obj.id||p.obj.name;
+                    const sp=sanPlan[k]||[0,0,0];
+                    const col=p.anah?'var(--red)':p.budgetPct>0.85?'var(--orange)':'var(--green)';
+                    return(<div className="san-obj" key={k}>
+                        <h4><span>{k} &middot; {p.obj.adresse}</span><span style={{color:col,fontSize:11}}>{p.anah?'\u26D4 Wird aktiviert':'\u2705 Sofort abzugsf\u00e4hig'}</span></h4>
+                        <div className="san-inputs">
+                            <label>Jahr 1<input type="number" value={sp[0]} onChange={e=>upSan(k,0,e.target.value)} step="1000"/></label>
+                            <label>Jahr 2<input type="number" value={sp[1]} onChange={e=>upSan(k,1,e.target.value)} step="1000"/></label>
+                            <label>Jahr 3<input type="number" value={sp[2]} onChange={e=>upSan(k,2,e.target.value)} step="1000"/></label>
+                            <div className="san-sum"><span className="sl">Summe 3J</span><span className="sv" style={{color:col}}>{fmt.eur(p.san3J)}</span></div>
+                        </div>
+                        <div className="san-check" style={{color:col}}>
+                            {p.anah?<>Summe {fmt.eur(p.san3J)} &gt; 15%-Grenze {fmt.eur(p.g15)} &rarr; Alles wird aktiviert (&uuml;ber {p.rnd}J abgeschrieben)</>
+                                   :<>Summe {fmt.eur(p.san3J)} &lt; 15%-Grenze {fmt.eur(p.g15)} &rarr; Budget noch {fmt.eur(p.budgetFrei)} frei</>}
+                        </div>
+                    </div>);
+                })}
+            </div>
+        </div>
+
+        {/* AfA Detail Cards */}
+        <div style={{display:'grid',gridTemplateColumns:`repeat(${projs.length},1fr)`,gap:16,marginBottom:20}}>
+            {projs.map(p=>(
+                <div className="card" key={p.obj.id}>
+                    <div className="card-head"><h3>{p.obj.id||p.obj.name} &middot; AfA-Analyse &middot; {p.obj.adresse}</h3></div>
+                    <div className="card-body">
+                        <div className="tax-dl">
+                            <span className="tl">{p.obj.art} / {p.obj.we} WE / {fmt.n(p.obj.wohnflaeche)} m&sup2;</span><span className="tv"></span>
+                            <span className="tl">Kaufpreis + KNK</span><span className="tv">{fmt.eur(p.obj.kaufpreis+p.obj.knk)}</span>
+                            <span className="tl">AK Geb&auml;ude ({fmt.pct1(gba)})</span><span className="tv">{fmt.eur(p.akGeb)}</span>
+                            <span className="tl">15%-Grenze</span><span className="tv">{fmt.eur(p.g15)}</span>
+                            <span className="tl">Sanierung 3J</span><span className="tv" style={{color:p.anah?'var(--red)':'var(--green)'}}>{fmt.eur(p.san3J)} {p.anah?'\u2192 aktiviert':'\u2192 sofort abz.'}</span>
+                            <span className="tl">AfA-Basis</span><span className="tv" style={{fontWeight:700}}>{fmt.eur(p.afaB)}</span>
+                            <span className="tl">RND (Gutachten)</span><span className="tv" style={{fontWeight:700,color:'var(--blue)'}}>{p.rnd} Jahre ({p.ri.gutachten})</span>
+                            <span className="tl">AfA p.a. (RND {fmt.pct1(1/p.rnd)})</span><span className="tv" style={{fontWeight:700,color:'var(--green)'}}>{fmt.eur(p.afaPA)}</span>
+                            <span className="tl">AfA p.a. (Standard 2%)</span><span className="tv" style={{color:'var(--red)'}}>{fmt.eur(p.afaStd)}</span>
+                            <span className="tl">Mehr-AfA p.a.</span><span className="tv" style={{fontWeight:700,color:'var(--green)'}}>+{fmt.eur(p.mehrAfa)}</span>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+
+        {/* 15% Info */}
+        <div className="tax-info">
+            <strong>&sect; 6 Abs. 1 Nr. 1a EStG (15%-Grenze):</strong>{' '}
+            {projs.map((p,i)=><span key={p.obj.id}>{i>0?' | ':''}<strong>{p.obj.id}:</strong> San. {fmt.eur(p.san3J)} {p.anah?`> ${fmt.eur(p.g15)} \u2192 wird aktiviert u. \u00fcber ${p.rnd}J abgeschrieben`:`< ${fmt.eur(p.g15)} \u2192 sofort abzugsf\u00e4hig als Erhaltungsaufwand`}</span>)}
+        </div>
+
+        {/* Year Table */}
+        <div className="card" style={{marginBottom:20,marginTop:20}}>
+            <div className="card-head"><h3>Steuerliche Verlustprognose &middot; {jr} Jahre &middot; RND gem. &sect; 7 Abs. 4 S. 2 EStG</h3></div>
+            <div style={{overflowX:'auto'}}>
+                <table>
+                    <thead><tr>
+                        <th>J.</th>
+                        {projs.map(p=><th key={p.obj.id} className="r">VuV {p.obj.id}</th>)}
+                        <th className="r">VuV Ges.</th><th className="r">zvE mit VuV</th>
+                        <th className="r">ESt ohne</th><th className="r">ESt mit</th>
+                        <th className="r">Ersparnis</th><th className="r">Kumuliert</th>
+                    </tr></thead>
+                    <tbody>
+                        {combined.map(r=>(
+                            <tr key={r.j} style={r.zvM<0?{background:'var(--red-bg)'}:undefined}>
+                                <td>{r.j}</td>
+                                {r.pts.map((v,i)=><td key={i} className="r" style={{color:v<0?'var(--red)':'var(--green)'}}>{fmt.eur(v)}</td>)}
+                                <td className="r" style={{fontWeight:600,color:r.vT<0?'var(--red)':'var(--green)'}}>{fmt.eur(r.vT)}</td>
+                                <td className="r" style={r.zvM<0?{color:'var(--red)',fontWeight:600}:undefined}>{fmt.eur(Math.max(0,r.zvM))}{r.zvM<0&&<span style={{fontSize:9}}> (VV)</span>}</td>
+                                <td className="r">{fmt.eur(r.stOhne)}</td>
+                                <td className="r">{fmt.eur(r.stMit)}</td>
+                                <td className="r" style={{fontWeight:600,color:'var(--green)'}}>{fmt.eur(r.er)}</td>
+                                <td className="r" style={{color:'var(--green)'}}>{fmt.eur(r.cumG)}</td>
+                            </tr>
+                        ))}
+                        <tr className="sum">
+                            <td>&sum;</td>
+                            {projs.map(p=><td key={p.obj.id} className="r" style={{color:'var(--red)'}}>{fmt.eur(p.rows.reduce((s,r)=>s+r.vuv,0))}</td>)}
+                            <td className="r">{fmt.eur(combined.reduce((s,r)=>s+r.vT,0))}</td>
+                            <td></td><td></td><td></td>
+                            <td className="r" style={{color:'var(--green)',fontWeight:700}}>{fmt.eur(cumG)}</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {/* Bar Chart */}
+        <div className="card" style={{marginBottom:20}}>
+            <div className="card-head"><h3>Steuerersparnis nach Jahr</h3></div>
+            <div className="card-body">
+                {combined.map(r=>(
+                    <div key={r.j} className="tax-bc">
+                        <div className="tax-bc-l">J{r.j}</div>
+                        <div className="tax-bc-t"><div className="tax-bc-f" style={{width:`${maxEr>0?r.er/maxEr*100:0}%`,background:r.er>=maxEr*0.9?'var(--green)':r.er>=maxEr*0.5?'#69db7c':'#b2f2bb'}}/></div>
+                        <div className="tax-bc-v">{fmt.eur(r.er)}</div>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        {/* Vermögenseffekt */}
+        <div className="card" style={{marginBottom:20}}>
+            <div className="card-head"><h3>Gesamter Verm&ouml;genseffekt &middot; {jr} Jahre</h3></div>
+            <div className="kpi-row c4">
+                <div className="kpi"><div className="label">Steuerersparnis</div><div className="val green">{fmt.eur(cumG)}</div><div className="sub">{jr} Jahre kumuliert</div></div>
+                <div className="kpi"><div className="label">Verm&ouml;gensaufbau (Tilgung)</div><div className="val blue">{fmt.eur(cumTilg)}</div><div className="sub">Schuldenabbau</div></div>
+                <div className="kpi"><div className="label">{totalSan>0?'Netto-Sanierungskosten':'Steuer p.a. (Schnitt)'}</div><div className={`val ${totalSan>0?'orange':'blue'}`}>{totalSan>0?fmt.eur(nettoSan):fmt.eur(Math.round(cumG/jr))}</div><div className="sub">{totalSan>0?`${fmt.eur(totalSan)} brutto \u2212 ${fmt.eur(sanEffekt)} Steuereffekt`:`\u00f8 ${fmt.eur(Math.round(ersJ1/12))}/Mon`}</div></div>
+                <div className="kpi"><div className="label">Gesamter Verm&ouml;genseffekt</div><div className="val green">{fmt.eur(cumG+cumTilg)}</div><div className="sub">Steuer + Tilgung</div></div>
+            </div>
+        </div>
+
+        {/* Detail pro Objekt */}
+        {projs.map(p=>(
+            <div className="card" key={p.obj.id} style={{marginBottom:20}}>
+                <div className="card-head"><h3>{p.obj.id} &middot; {p.obj.adresse} &middot; VuV-Detail</h3></div>
+                <div style={{overflowX:'auto'}}>
+                    <table>
+                        <thead><tr>
+                            <th>J.</th><th className="r">NKM</th><th className="r">Zinsen</th><th className="r">AfA</th>
+                            <th className="r">Erhalt.</th><th className="r">Sonst.</th><th className="r">VuV</th>
+                            <th className="r">Tilgung</th><th className="r">Restschuld</th>
+                            <th className="r">Ersparnis</th><th className="r">Kumuliert</th>
+                        </tr></thead>
+                        <tbody>
+                            {p.rows.map(r=>(
+                                <tr key={r.j}>
+                                    <td>{r.j}</td>
+                                    <td className="r">{fmt.eur(r.nkm)}</td>
+                                    <td className="r" style={{color:'var(--red)'}}>-{fmt.eur(r.zi)}</td>
+                                    <td className="r" style={{color:'var(--red)'}}>-{fmt.eur(r.afa)}</td>
+                                    <td className="r">{r.erh>0?<span style={{color:'var(--red)'}}>-{fmt.eur(r.erh)}</span>:'\u2013'}</td>
+                                    <td className="r">{r.son>0?<span style={{color:'var(--red)'}}>-{fmt.eur(r.son)}</span>:'\u2013'}</td>
+                                    <td className="r" style={{fontWeight:600,color:r.vuv<0?'var(--red)':'var(--green)'}}>{fmt.eur(r.vuv)}</td>
+                                    <td className="r">{fmt.eur(r.ti)}</td>
+                                    <td className="r">{fmt.eur(r.rs)}</td>
+                                    <td className="r" style={{color:'var(--green)',fontWeight:600}}>{fmt.eur(r.er)}</td>
+                                    <td className="r" style={{color:'var(--green)'}}>{fmt.eur(r.cum)}</td>
+                                </tr>
+                            ))}
+                            <tr className="sum">
+                                <td>&sum;</td><td></td><td></td><td className="r" style={{color:'var(--red)'}}>-{fmt.eur(p.rows.reduce((s,r)=>s+r.afa,0))}</td>
+                                <td className="r" style={{color:'var(--red)'}}>{p.rows.reduce((s,r)=>s+r.erh,0)>0?'-'+fmt.eur(p.rows.reduce((s,r)=>s+r.erh,0)):''}</td><td></td>
+                                <td className="r" style={{color:p.rows.reduce((s,r)=>s+r.vuv,0)<0?'var(--red)':'var(--green)'}}>{fmt.eur(p.rows.reduce((s,r)=>s+r.vuv,0))}</td>
+                                <td className="r">{fmt.eur(p.startRS-(p.rows[p.rows.length-1]?.rs||0))}</td>
+                                <td className="r">{fmt.eur(p.rows[p.rows.length-1]?.rs||0)}</td>
+                                <td className="r" style={{color:'var(--green)',fontWeight:700}}>{fmt.eur(p.cum)}</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        ))}
+
+        {/* Hinweise */}
+        <div className="tax-info" style={{background:'var(--orange-bg)'}}>
+            <strong>Hinweise:</strong> ESt-Tarif 2025/2026 (N&auml;herung). Soli ab 18.130&euro; Freigrenze. KiSt {ki>0?(ki*100)+'%':'nicht ber\u00fccksichtigt'}. Mietsteigerung {(mst*100).toFixed(1)}% p.a. Keine Sonder-AfA oder Denkmalschutz ber\u00fccksichtigt.
+            15%-Grenze bezieht sich auf AK Geb&auml;ude inkl. anteilige KNK (&sect; 6 Abs. 1 Nr. 1a EStG).
+            Erhaltungsaufwand nur absetzbar im Jahr der Zahlung (Abflussprinzip, &sect; 11 Abs. 2 EStG).
+            <strong>Abstimmung mit Steuerberater empfohlen.</strong>
+        </div>
+    </>);
+};
+
+// ═══════════════════════════════════════════════
+// EDIT MODAL
+// ═══════════════════════════════════════════════
+const EditModal=({obj,onSave,onClose})=>{
+    const [f,setF]=useState({...obj});
+    const c=calcInternal(f);
+    const num=(field,val)=>setF(p=>({...p,[field]:parseFloat(val)||0}));
+
+    return(<div className="overlay" onClick={onClose}>
+        <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="modal-h"><h3>{obj.name} bearbeiten</h3><button style={{background:'none',border:'none',color:'#fff',fontSize:20,cursor:'pointer'}} onClick={onClose}>&times;</button></div>
+            <div className="modal-b">
+                <div className="grid-2">
+                    <div className="fg"><label>Name</label><input className="fi" value={f.name} onChange={e=>setF({...f,name:e.target.value})}/></div>
+                    <div className="fg"><label>Adresse</label><input className="fi" value={f.adresse} onChange={e=>setF({...f,adresse:e.target.value})}/></div>
+                    <div className="fg"><label>Kaufpreis</label><input className="fi" type="number" value={f.kaufpreis} onChange={e=>num('kaufpreis',e.target.value)}/></div>
+                    <div className="fg"><label>KNK</label><input className="fi" type="number" value={f.knk} onChange={e=>num('knk',e.target.value)}/></div>
+                    <div className="fg"><label>Renovierung</label><input className="fi" type="number" value={f.renovierung} onChange={e=>num('renovierung',e.target.value)}/></div>
+                    <div className="fg"><label>NKM / Monat</label><input className="fi" type="number" value={f.nkmMonat} onChange={e=>num('nkmMonat',e.target.value)}/></div>
+                    <div className="fg"><label>Marktwert</label><input className="fi" type="number" value={f.marktwert} onChange={e=>num('marktwert',e.target.value)}/></div>
+                    <div className="fg"><label>Wohnflaeche m2</label><input className="fi" type="number" value={f.wohnflaeche} onChange={e=>num('wohnflaeche',e.target.value)}/></div>
+                    <div className="fg"><label>Hausgeld p.a.</label><input className="fi" type="number" value={f.hausgeld} onChange={e=>num('hausgeld',e.target.value)}/></div>
+                    <div className="fg"><label>Sonstige Kosten p.a.</label><input className="fi" type="number" value={f.sonstigeKosten} onChange={e=>num('sonstigeKosten',e.target.value)}/></div>
+                    <div className="fg"><label>Restschuld</label><input className="fi" type="number" value={f.restschuld} onChange={e=>num('restschuld',e.target.value)}/></div>
+                    <div className="fg"><label>Kreditrate / Monat</label><input className="fi" type="number" value={f.kreditrate} onChange={e=>num('kreditrate',e.target.value)}/></div>
+                </div>
+                <div className="preview">
+                    <div className="pt">Live-Vorschau (echte BWK)</div>
+                    <div className="grid-3" style={{fontSize:12}}>
+                        <div><span style={{color:'var(--text-3)'}}>GIK:</span> <strong>{fmt.eur(c.gik)}</strong></div>
+                        <div><span style={{color:'var(--text-3)'}}>Faktor:</span> <strong>{fmt.n(c.faktor,1)}x</strong></div>
+                        <div><span style={{color:'var(--text-3)'}}>DSCR:</span> <strong>{fmt.n(c.dscr,2)}x</strong></div>
+                        <div><span style={{color:'var(--text-3)'}}>CF/Mon:</span> <strong style={{color:c.cashflowMonat>=0?'var(--green)':'var(--red)'}}>{fmt.eur(c.cashflowMonat)}</strong></div>
+                        <div><span style={{color:'var(--text-3)'}}>ROE:</span> <strong>{fmt.pct(c.roe)}</strong></div>
+                        <div><span style={{color:'var(--text-3)'}}>LTV:</span> <strong>{fmt.pct1(c.ltv)}</strong></div>
+                    </div>
+                </div>
+            </div>
+            <div className="modal-f">
+                <button className="btn" onClick={onClose}>Abbrechen</button>
+                <button className="btn btn-p" onClick={()=>onSave(f)}>Speichern</button>
+            </div>
+        </div>
+    </div>);
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App/></ErrorBoundary>);
+</script>
+</body>
+</html>
